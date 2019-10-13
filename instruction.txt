@@ -1,0 +1,87 @@
+ npm node -v  //проверить версию node.js
+ npm ls -g --depth=0    //проверить версии всех установленных глобально пакетов
+ npm init   //создание проекта (файла package.json)
+ npm i gulp --save-dev  //установка пакета gulp, ключ --save-dev лучше всегда добавлять (он прописывает версию галпа в package.json)
+
+ далее работаем с gulpfile.js
+ создаем переменную gulp и присваиваем ей сам gulp, теперь для вызова галпа используем слово gulp
+ создаем структуру будущего проекта (папку app - с ней будем работать)
+
+ далее устанавливаем нужные нам плагины галпа
+ npm i gulp-sass --save-dev //устанавливаем плагин sass
+
+ далее пишем таск для sass
+ gulp.task('scss', function(){
+    return gulp.src('app/scss/**/*.scss')   //пишем путь до нужных файлов
+        .pipe(sass())   //метод pipe содержит плагины(в данном случае плагин sass()), ко всем найденным фалйом применяются задачи в плагине
+});
+пишем код в style.scss, затем запускаем таск командой gulp scss
+в таске в строке .pipe(sass()) в sass() в скобках можем писать настройки
+    {outputStyle: 'compressed'} минифицирует файл style.css
+    {outputStyle: 'expanded'} красивый вид (с отступами и т.д.)
+
+далее в gulpfile.js пишем ватчер для слежки и автоматической компиляции
+gulp.task('watch', function(){
+    gulp.watch('app/scss/**/*.scss', gulp.parallel('scss'))
+});
+т.е. если в пути 'app/scss/**/*.scss' будут изменения, то будет запущен таск 'scss'
+gulp watch  //далее запускаем таск watch, который не заканчивается и будет следить за изменениями
+ctrl+c  //завершить gulp watch
+
+далее устанавливаем browser-sync
+npm i browser-sync --save-dev
+пишем дефолтный таск; 'default' ключевое слово, которое говорит, что при написании gulp в консоли, должно выполняться все что написано в дефолтном таске
+browser-sync так же как и watch работает в режиме реального времени, поэтому в дефолтном таске мы должны запускать их оба
+добавляем в таск scss строку .pipe(browserSync.reload({stream: true})) чтобы browser-sync срабатывал при изменении в scss
+
+большое приемущество browser-sync в том, что если комп/планшет/телефон в одной сети wi-fi, то можно смотреть изменения на любом устройстве введя из строки External: http://192.168.0.105:3000 в адресную строку браузера http://192.168.0.105:3000
+
+пока что отслеживание и автообновление работает только для css файлов, нужно еще настроить для html и для js
+настроим для html, пишем таск для html (этот таск не подходит для препроцессоров html (pug/jade))
+gulp.task('html', function(){
+    return gulp.src('app/*.html')
+        .pipe(gulp.dest('build/'))
+        .pipe(browserSync.reload({stream: true}));
+});
+и добавляем этот таск в наш ватчер
+
+
+далее установим 3 плагина normalize.css slick-carousel magnific-popup
+npm i normalize.css slick-carousel magnific-popup   //устанавливаем плагины
+для css просто пишем в style.scss @import и путь к файлу (без .css) и для slick-carousel удаляем файл slick.scss (чтобы не было ошибки)
+для js:
+    npm i gulp-uglify gulp-concat --save-dev    //устанавливаем углифи для минификации js и concat для конкатенации файлов js в один
+    затем создаем переменные для них
+    добавляем в ватчер отслеживание дял js
+
+на данный момент у нас в таске js происходит обновление страницы только когда добавляем новые библиотеки, сделаем чтобы страница обновлялась при измененниях в main.js (так же как и с html)
+gulp.task('script', function(){
+    return gulp.src('app/js/*.js')
+        .pipe(gulp.dest('build/js'))
+        .pipe(browserSync.reload({stream: true}));
+});
+
+
+чтобы создавать новые проекты на основе этой сборки, нужно скачивать app, package.json, gulpfile.js, затем в терминале прописывать npm i, и затем на основе данных в файле package.json начнут скачиваться папка node_modules и package-lock.json
+
+
+/*-----второй урок------*/
+
+пишем таск для переноса нужных файлов/папок из app в dist
+
+npm i del   //устанавливаем плагин del, чтобы перед сборкой, сперва удалялось старое (очень желательно устанавливать этот плагин)
+пишем таск для него
+gulp.task('clean', async function(){
+    del.sync('dist');
+});
+
+затем объединяем clean и export в один таск build
+gulp.task('build', gulp.series('clean', 'export'));
+
+npm install --save-dev gulp-autoprefixer    //далее ставим autoprefixer, слздаем переменную и добавляем в scss после минификации
+
+
+/*----------*/
+https://www.npmjs.com/package/package
+https://www.browsersync.io/docs/gulp
+https://gulpjs.com/
